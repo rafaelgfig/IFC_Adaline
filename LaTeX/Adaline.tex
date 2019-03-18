@@ -1,0 +1,418 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese,english]{babel} % Pacote para deixar os nomes em PT-BR.
+\usepackage{indentfirst}               % Força identação após abertura de sessão.
+\usepackage{graphicx}                  % Pacote para adicionar figuras
+\usepackage{float}                     % Pacote usado para forçar posicionamento de figuras
+\usepackage{amsmath}                   % Podo matemático mais completinho
+\usepackage{enumitem}                  % Para conseguir fazer lista sem simbolo
+\usepackage{natbib}                    % Citações diferenças
+\usepackage{listings}                  % Inserir código de forma mais bonita
+\usepackage{xcolor}                    % Definir cores
+
+\definecolor{green}{RGB}{0,150,0}      
+\definecolor{blue}{RGB}{0,0,150}       
+\definecolor{pink}{RGB}{255,0,255}
+\lstset{                               % Para permitir caracteres especiais no código e outros ajustes
+	language=Python,
+	basicstyle=\ttfamily\small,
+	numberstyle=\footnotesize,
+	numbers=left,
+	backgroundcolor=\color{gray!8},
+	commentstyle=\color{green},
+	stringstyle=\color{gray},
+	emph={step},           % Custom highlighting
+	emphstyle=\color{pink},% Custom highlighting style
+	showstringspaces=false,
+	tabsize=1,
+	keywordstyle=\color{blue},
+	rulecolor=\color{black!30},
+	title=\lstname,
+	escapeinside={\%*}{*)},
+	breaklines=true,
+	breakatwhitespace=true,
+	framextopmargin=4pt,
+	framexbottommargin=4pt,
+	inputencoding=utf8,
+	extendedchars=true,
+	literate={á}{{\'a}}1 {ã}{{\~a}}1 {õ}{{\~o}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {í}{{\'i}}1 {ú}{{\'u}}1 {ô}{{\^o}}1 {à}{{\`a}}1 {ç}{{\c{c}}}1
+}
+
+
+\renewcommand{\sin}{\mathrm{sen\hspace{0.5mm}}} % Renomeação de "sin" para "sen" do comando de seno
+\renewcommand{\tan}{\mathrm{tg\hspace{0.5mm}}}  % Renomeação de "tan" para "tg" do comando de tangente
+\renewcommand{\cos}{\mathrm{cos\hspace{0.5mm}}} % Renomeação de "cos" para "cos" do comando de cosseno (pq sim)
+
+
+\pagestyle{empty}
+
+\begin{document}
+	
+	\title{\textbf{Aprendizado de Funções Booleanas Linearmente Separáveis Utilizando Rede Adaline}}
+	\author{\textbf{Rafael Gonçalves Figueira}}
+	\date{20 de Junho de 2018}
+	
+	\maketitle
+	
+	\thispagestyle{empty}
+		
+	\selectlanguage{english}
+	
+	\begin{abstract}
+		
+		This article presents the study and development of a simple neural network for learning operations of Boolean algebra through the Adaline algorithm, which aims to demonstrate the learning ability of artificial neural networks and one of their possible applications. The results show that for linearly separable problems the Adaline neural network was able to learn quickly and arrive at the expected results, but in non-linearly separable scenarios such as "exclusive" ($xor$), the network was unable to be trained.
+		
+	\end{abstract}
+
+	\selectlanguage{portuguese}
+	
+	\begin{abstract}
+		
+		Este artigo apresenta o estudo e desenvolvimento de uma rede neural simples para aprendizado de operações da álgebra booleana por meio de algoritmo Adaline, os quais, visa demonstrar a capacidade de aprendizado das redes neurais artificiais e uma das suas possíveis aplicações. Os resultados mostram que para problemas linearmente separáveis a rede neural Adaline conseguiu aprender rapidamente e chegar nos resultados esperados, mas em cenários não linearmente separáveis como o “ou exclusivo” ($xor$), a rede foi incapaz de ser treinada. 
+		
+		\textbf{Palavras-chaves: Rede Neural, Adaline, Aprendizado de Máquina, Perceptron, Inteligência Artificial}.
+		
+	\end{abstract}
+
+	\section{Introdução}
+	
+		Redes neurais artificiais são modelos computacionais inspirados no sistema nervoso de seres vivos. Possuem a capacidade de aquisição e manutenção do conhecimento (baseado em informações) e podem ser definidas por um conjunto de unidades de processamento, caracterizadas por neurônios artificiais, que são interligados por um grande número de interconexões (sinapses artificiais), sendo representadas por vetores/matrizes de pesos sinápticos. \cite{RedesNeuraisIvanNunes}
+		
+		Uma RNA (Rede Neural Artificial) só pode resolver o problema para qual foi projetada, após passar por um processo de treino. Todo o desempenho das RNAs está relacionado com o processo de treino, na qual é realizado o ajuste dos pesos sinápticos de acordo com os objetivos da rede.
+		
+		O primeiro modelo de rede neural (numa época em que ainda não havia a diferença atual entre neurociência computacional e redes neurais artificiais) foi proposto por Warren S. McCulloch e Walter Pitts, em um artigo publicado em 1943: “A logical calculus of the ideas immanent in nervous activity”, Bulletin of Mathematical, Biophysics, 5: 115-133.
+		
+		Considerada a primeira e mais primitiva estrutura de uma rede neural, o Perceptron é usado para classificar padrões linearmente separáveis (que podem ser separados por uma reta em um hiperplano), consistindo basicamente de um único neurônio com pesos sinápticos ajustáveis. 
+		
+		O Perceptron, embora seja uma rede simples, teve o potencial de atrair, quando de sua proposição, diversos pesquisadores que aspiravam investigar essa promissora área de pesquisa para a época, recebendo-se ainda especial atenção da comunidade científica que também trabalhava com inteligência artificial. \cite{RedesNeuraisIvanNunes}
+		
+		Poucos meses após a publicação do teorema da convergência do Perceptron por Rosenblatt, os engenheiros da Universidade de Stanford Bernand Widrow e Marcian Hoff publicaram um trabalho descrevendo uma RNA muito parecida com o Perceptron, porém com as unidades de saída tendo funções de transferência lineares e com uma nova regra de aprendizado supervisionado, que ficou conhecida como regra de Widrow-Hoff (ou regra delta, ou ainda regra LMS). A RNA apresentada por eles foi batizada de Adaline (do inglês Adaptive Linear Element).
+		
+		Este trabalho, em questão, procura aplicar o funcionamento da rede Adaline no aprendizado das funções booleanas $or$ e $xor$.
+		
+	\section{Rede Neural}
+	
+		As redes neurais são compostas por nós ou unidades conectadas por ligações direcionadas. Uma ligação da unidade $i$ para a unidade $j$ serve para propagar a ativação $x_i$ de $i$ para $j$. Cada ligação também tem um peso numérico $w_{ij}$ associado a ele, que determina a força e o sinal de conexão. Assim como em modelos de regressão linear, cada unidade tem uma entrada fictícia $x_0 = 1$ com peso associado $w_{0j}$. Cada unidade $j$ primeiro calcula uma soma ponderada de suas entradas:		
+		\begin{equation*}
+			in_j = \sum_{i=0}^{n} w_{ij} x_i . % X Somatório RNA
+		\end{equation*}		
+		Em seguida, aplica uma função de ativação \textit{g} a essa soma para obter a saída:		
+		\begin{equation*}
+			x_j = g(in_j) = g \left(\sum_{i=0}^{n} w_{ij} x_i\right).
+		\end{equation*}		
+		A ativação da função g tipicamente é tanto um limiar rígido, caso em que a unidade é chamada de perceptron, como uma função logística, caso em que por vezes é utilizado o termo perceptron sigmoide. \cite{IAStuartRussell}
+		
+		RNAs têm capacidade computacional relacionada à aprendizagem e à generalização. Nesse sistema, o conhecimento é adquirido por um processo chamado "treinamento” ou "aprendizagem” que fica armazenado em forças de conexões entre os neurônios, chamadas pesos sinápticos. \cite{RedesNeuraisSimonHaykin}
+		
+		Segundo Braga et al., as RNAs são capazes de aprender através de um conjunto reduzido de exemplos e depois generalizar o conhecimento adquirido, sendo capaz de dar respostas coerentes para dados desconhecidos.
+		
+		Um modelo básico de RNA possui os seguintes componentes:
+		
+		\begin{itemize}
+			
+			\item Conjunto de sinapses: conexões entre os neurônios da RNA. Cada uma delas possui um peso sináptico;
+			 
+			\item Integrador: realiza a soma dos sinais de entrada da RNA, ponderados pelos pesos sinápticos; 
+			
+			\item Função de ativação: restringe a amplitude do valor de saída de um neurônio; 
+			
+			\item Bias: valor aplicado externamente a cada neurônio e tem o efeito de aumentar ou diminuir a entrada líquida da função de ativação.
+			
+		\end{itemize}
+	
+		Existem diversos tipos de funções de ativação, sendo que as mais populares são apresentadas a seguir \cite{RedesNeuraisSimonHaykin}:
+		
+		\begin{itemize}
+			
+			\item Função limiar ou degrau: normalmente restringe a saída da RNA em valores binários [0,1] ou bipolares [-1,1]. Logo, pode ser representada por:			
+			\begin{equation*}
+				\phi(u) = 
+				\left \{ \begin{matrix}
+					1 & \mbox{se }u \ge 0 \\
+					0 & \mbox{se }u < 0
+				\end{matrix} \right.
+			\end{equation*}			
+			Um neurônio definido através dessa função de ativação é conhecido como o modelo de McCulloch-Pitts. A saída do neurônio com função limiar assume o valor de um se o potencial de ativação não é negativo e zero caso seja. 
+			
+			\item Função sigmoide: trata-se da função mais comum. É definida como uma função crescente com balanceamento adequado entre o comportamento linear e não linear e assume um intervalo de variação entre 0 e 1 e é dada por:			
+			\begin{equation*}
+				\phi(u) = 
+				\frac{1}{1+exp(-au)}
+			\end{equation*}			
+			Sendo $a$ o parâmetro da inclinação da função. Através da variação do parâmetro a são obtidas funções sigmoidais com diferentes declividades. Quando o parâmetro declividade se aproxima do infinito, a função se torna simplesmente uma função limiar.
+			
+			\item Função tangente hiperbólica: assume um intervalo de variação de -1 a 1 e é definida por:			
+			\begin{equation*}
+				\phi(u) = \tan(u)
+			\end{equation*}			
+			Segundo Haykin, a característica da função tangente hiperbólica de assumir valores negativos traz benefícios analíticos.
+			
+		\end{itemize}
+	
+		Os comportamentos das funções de ativação estão apresentados na Figura 1.	 
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.7\linewidth]{Figuras/Figura01}
+			\caption[Figura 01]{Ativação degrau, sigmoidal e tangente hiperbólica, respectivamente.}
+			\label{fig:Figura 1}
+		\end{figure}
+		
+	\section{Processo de aprendizagem}
+	
+		O atributo com maior relevância de uma RNA é certamente a capacidade de aprender a partir dos dados de entrada que lhe são inseridos e melhorar seu desempenho através dos ajustes dos pesos sinápticos.
+		
+		Durante o aprendizado, também chamado de treinamento, são realizados processos interativos (na qual cada entrada provoca uma resposta) e iterativo com um conjunto de parâmetros livres a fim de que a rede alcance o desempenho desejado. Todo o conhecimento obtido durante o aprendizado é armazenado na forma de pesos sinápticos das ligações neurais, aspecto esse que permite a rede ser replicada livremente. 
+		
+		No caso da rede neural Adaline, o aprendizado é feito através de um algoritmo supervisionado, sendo que para cada padrão de entrada deve existir um padrão de saída desejado. O objetivo do aprendizado é fazer com que a saída da rede seja igual ao esperado.
+		
+		\subsection{Regra de Widrow-Hoff}
+		
+			A principal característica que distingue a rede Adaline da rede Perceptron é a regra de Widrow-Hoff, muitas vezes referida como regra delta. Essa característica de aprendizado supervisionado permite quantificar o desempenho através da função erro: se a RNA classificar corretamente todos os padrões, seu erro é 0; e quanto maior o número de classificações erradas, maior será o erro. \cite{PsicoConexAntonio}
+			
+			A função erro, também chamada de custo em algumas literaturas, pode ser definida como:
+			\begin{equation*}
+				E = E(d - \sum_{i} w_i a_i) . % Função erro (custo)
+			\end{equation*}			
+			Sendo $d$ a saída desejada e $E$ a função erro.
+			
+	\section{Algoritmo}
+	
+		Para expressar graficamente o comportamento da rede Adaline sobre dados linearmente separáveis e não linearmente separáveis, foi desenvolvido um algoritmo simples para o ajustar os pesos \textit{w\textsubscript{i}}, respeitando a regra delta, dado a seguir:
+		
+		\begin{enumerate}
+			
+			\item Determina taxa de aprendizado e função de ativação definidos por $r$ e $g$;
+			
+			\item Lê os padrões de treino: os $N$ padrões ($x_i$,$d_i$), onde $x_i$ é o padrão de entrada e $d_i$ o padrão de saída desejado;
+			
+			\item Inicializa randomicamente valores entre -1 e 1 para os pesos $w_i$;
+			
+			\item Para $t$ = 1, 2, ..., repita os passos abaixo:
+			
+			\begin{enumerate}
+				
+				\item Pegue um padrão ($x_i$) de entrada com respectivo padrão ($d_i$) de saída;
+				
+				\item Calcule a saída do neurônio: $s = g(x_i*w_i)$;
+				
+				\item Calcule o erro: $e(t)=d(t)-s(t)$;
+				
+				\item Modifique os pesos: $w_i = w_i + r*e(t)*x_i(t)$.
+				
+			\end{enumerate}
+		
+		\end{enumerate}
+	
+		\subsection{Dados linearmente separáveis}
+			Executando o algoritmo para aprender a função booleana $or$, temos os pesos gerados aleatoriamente antes do treino: 
+			\begin{itemize}[label={}]
+				\item $W_1: -0.55601366$
+				\item $W_2:  0.74146461$
+				\item $W_3: -0.58656169$
+			\end{itemize}
+			E após a regra delta ser aplicada para ajustar os pesos: 
+			\begin{itemize}[label={}]
+				\item $W_1: 0.64398634$
+				\item $W_2: 0.74146461$
+				\item $W_3: 0.61343831$
+			\end{itemize}
+		
+			Durante esse treino houveram ajustes dos pesos para minimizar o desvio entre a saída calculada pelo algoritmo e a saída desejada, sendo limitado a 100 iterações. 
+			
+			A Figura 2 e a Figura 3 demonstram o valor de erro em relação as iterações e os respectivos ajuste dos pesos.
+			
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=0.7\linewidth]{Figuras/Resultado01}
+				\caption[Resultado OR 01]{Erros durante treino da rede Adaline}
+				\label{fig:resultado01}
+			\end{figure}
+			
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=0.7\linewidth]{Figuras/Resultado02}
+				\caption[Resultado OR 02]{Ajuste dos pesos durante treino da Adaline}
+				\label{fig:resultado02}
+			\end{figure}
+		
+			Através da análise dos gráficos, pode ser observado que na ausência de desvio da saída desejada com a saída calculada e erro se mantendo em zero, não existe ajuste dos pesos, permanecendo estável até o fim das iterações delimitadas. Mostrando assim que o algoritmo conseguiu chegar em uma solução ótima para a entrada de dados linearmente separável.
+		
+		\subsection{Dados não linearmente separáveis}
+	
+			A fim de melhorar demonstrar o comportamento do algoritmo aprendendo a função booleana $xor$, foram inseridos os mesmos pesos gerados inicialmente durante treino da função $or$.
+			
+			Logo temos os pesos antes do treino, sendo eles:
+			\begin{itemize}[label={}]
+				\item $W_1: -0.55601366$
+				\item $W_2:  0.74146461$
+				\item $W_3: -0.58656169$
+			\end{itemize}
+			E os pesos obtidos após a última iteração:
+			\begin{itemize}[label={}]
+				\item $W_1: -0.55601366$
+				\item $W_2: -0.45853539$
+				\item $W_3: -0.58656169$
+			\end{itemize}
+			
+			Ao contrário da função $or$, durante todo treino os pesos se mantiveram instáveis, não obtendo assim uma uma solução ótima, o algoritmo continuou tentando ajustar os pesos até a última iteração.
+			
+			A Figura 4 e a Figura 5 mostram o valor de erro em relação as iterações e os respectivos ajuste dos pesos.
+			
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=0.7\linewidth]{Figuras/Resultado03}
+				\caption[Resultado XOR 01]{Erros durante treino da rede Adaline}
+				\label{fig:resultado03}
+			\end{figure}
+			
+			\begin{figure}[H]
+				\centering
+				\includegraphics[width=0.7\linewidth]{Figuras/Resultado04}
+				\caption[Resultado XOR 02]{Ajuste dos pesos durante treino da Adaline}
+				\label{fig:resultado04}
+			\end{figure}
+			
+			É possível observar nos gráficos a incapacidade da rede Adaline em aprender a função $xor$, uma vez que os dados de entrada não são linearmente separáveis. A rede se mantém ajustando os pesos enquanto sempre há desvio da saída desejada com a saída calculada.
+			
+	\section{Conclusão}
+	
+		Este presente trabalho teve como objetivo demonstrar o funcionamento da rede neural Adaline através de um algoritmo simples de aprendizado de máquina para aprender duas funções booleanas, sendo uma com um conjunto de dados linearmente separável (operação $or$) e outra não (operação $xor$).
+		
+		Foi possível observar a velocidade da RNA em aprender a função $or$, uma vez que ela seja linearmente separável. todavia, uma vez que a função $xor$ não seja linearmente separável, a rede foi incapaz de aprender. Existem $N$ métodos de simular a função $xor$, muitas delas sem precisar utilizar algoritmos de aprendizado de máquina, entretanto, não foi o objetivo desse artigo abordar outros métodos.
+		
+		O artigo não tem intenção de aprofundar conceitos sobre redes neurais artificiais ou demonstrar outros algoritmos de aprendizado de máquina, apenas demonstrar de forma prática e simples o funcionamento de uma rede neural Adaline através de exemplos mais didáticos, como o exemplo das operações da álgebra booleana.
+		
+		Estima-se que esse projeto desperte interesse em entusiastas na área de inteligência computacional à buscarem mais conhecimento sobre o tema supracitado, em vista que é uma área multidisciplinar, tendo diversas aplicações comprovadas e muitas que ainda precisarão ser exploradas.
+	
+	% Bibliografia
+	
+		\newpage
+		\nocite{Capitulo3Perceptron}
+		\nocite{RedeNeuralComJava}
+		
+		\bibliographystyle{unsrt} 
+		\bibliography{Bibliografia}
+		
+	% Algoritmo
+	
+		\newpage
+		\section*{Código do Algoritmo em Python}
+			\begin{lstlisting}[language=Python]
+				# -*- coding: utf-8 -*-
+				"""
+				Título: Rede neural simples - Adaline
+				Autor: Rafael Goncalves
+				Data: 25/04/2018
+				"""
+				import numpy as np
+				import matplotlib.pyplot as plt
+
+				# Taxa de aprendizado para o treino
+				taxaAprendizado = 0.3
+
+				# Seed dos números aleatórios para cálculos deterministicos
+				np.random.seed(5)
+
+				# Listas usadas para armazenar os erros e os pesos
+				erros=[]
+				bias =[]
+				peso1=[]
+				peso2=[]
+
+				# Função degrau
+				def step(x):
+					if (x > 0):
+						return 1
+					return -1
+
+				# Primeiro exemplo. OR, linearmente separável
+				# Dados de entrada representando o operador logico OR (com o BIAS fixo de 1)
+				entradas = np.array([[1,-1,-1],
+									 															[1, 1,-1],
+									 															[1,-1, 1],
+										 														[1, 1, 1]])
+					
+				# Saída dos dados. Resulta 1 se uma das duas entradas for 1          
+				saidas = np.array([[-1,
+																								 1,
+																								 1,
+																								 1]]).T
+
+
+				# Segundo exemplo. XOR, não linearmente separável
+				# Dados de entrada representando o operador logico XOR (com o BIAS fixo de 1)
+				entradas = np.array([[1,-1,-1],
+									 															[1, 1,-1],
+									  														[1,-1, 1],
+									  														[1, 1, 1]])
+
+				# Saída dos dados. Resulta 1 se as entradas forem diferentes.          
+				saidas = np.array([[-1,
+																								 1,
+									 														 1,
+																							 -1]]).T
+
+
+				# Inicializa os pesos aleatoriamente com média 0
+				pesos = 2 * np.random.random((3,1)) - 1
+				print ("\nPesos aleatórios antes do treino: \n", pesos)
+				# Loop de treino
+				for i in range(100):
+
+					for entrada,saidaDesejada in zip(entradas, saidas):
+						
+						 # Alimenta (feedforward) e calcula o somatório da Adaline
+						somatorio = (entrada[0]*pesos[0]) + (entrada[1]*pesos[1]) + (entrada[2]*pesos[2])
+
+						# Processa a saída atraves da função degrau
+						saidaAdaline = step(somatorio)
+
+						# Calcula o erro gerado
+						erro = saidaDesejada - saidaAdaline
+						
+						# Armazena os erros e os pesos
+						erros.append(erro)
+						bias.append (pesos[0][0])
+						peso1.append(pesos[1][0])
+						peso2.append(pesos[2][0])
+						
+						# Atualiza os pesos de acordo com a regra do Delta
+						pesos[0] = pesos[0] + taxaAprendizado * erro * entrada[0]
+						pesos[1] = pesos[1] + taxaAprendizado * erro * entrada[1]
+						pesos[2] = pesos[2] + taxaAprendizado * erro * entrada[2]
+
+				print ("\nNovos pesos após o treino: \n", pesos, "\n")
+				for entrada,saidaDesejada in zip(entradas, saidas):
+					
+					# Alimenta a entrada para frente (feedforward) e calcula a saída da Adaline
+					somatorio = (entrada[0]*pesos[0]) + (entrada[1]*pesos[1]) + (entrada[2]*pesos[2])
+
+					# Processa a saída atraves da função degrau
+					saidaAdaline = step(somatorio)
+
+					print ("Saída calculada: ", saidaAdaline, "  Saída desejada: ", saidaDesejada)
+
+				# Plota os erros durante o treinamento
+				ax = plt.subplot(111)
+				ax.set_xscale("log")
+				#ax.set_ylim([-2,2])
+				plt.plot(erros,'#000000')
+				plt.legend(('Erro',),shadow=True)
+				#plt.title("Erros durante treino da Adaline")
+				plt.xlabel('Iteração')
+				plt.ylabel('Valor')
+				plt.show()
+
+				# Plota as variações dos pesos durante o treino
+				ax = plt.subplot(111)
+				ax.set_xscale("log")
+				#ax.plot(erros, c='#000000', label='Erro', alpha=0.3)
+				plt.plot(bias,'r',peso1,'g',peso2,'b')
+				plt.legend(('Bias','Peso 1', 'Peso 2'),shadow=True)
+				#plt.title("Ajuste dos pesos durante treino da Adaline")
+				plt.xlabel('Iteração')
+				plt.ylabel('Valor')
+				plt.show()
+			\end{lstlisting}
+\end{document}
