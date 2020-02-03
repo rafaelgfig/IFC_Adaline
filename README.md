@@ -4,7 +4,7 @@ Autor: Rafael Gonçalves Figueira | 20 de Junho de 2018
 
 O código em Python `Rede Adaline.py` foi criado como ferramenta de estudos para demonstrar como uma rede Adaline (_**Ada**ptive **Line**ar Neuron_) simples se comporta aprendendo funções booleanas com entradas linearmente e não linearmente separáveis.
 
-A pasta `LaTeX` contem todo o código Markdown utilizado para criar o artigo científico formatado.
+A pasta `LaTeX` contém todo o código Markdown utilizado para criar o artigo científico formatado.
 
 Abaixo está o artigo redigido, para uma melhor visualização, é aconselhável ler através do `Artigo Científico.pdf`.
 
